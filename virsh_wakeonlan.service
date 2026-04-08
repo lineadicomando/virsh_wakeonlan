@@ -1,0 +1,16 @@
+[Unit]
+Description=Wake-on-LAN Virsh Listener
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/virsh_wakeonlan_listener.py
+Restart=always
+User=root
+WorkingDirectory=/usr/local/bin/
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=wol_virsh
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
