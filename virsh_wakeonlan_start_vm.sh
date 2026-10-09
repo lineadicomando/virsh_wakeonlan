@@ -45,6 +45,11 @@ done)
 
 # Output result
 if [[ -n "$VM_NAME" ]]; then
+    # Senders repeat the magic packet: a VM that is already running is not an error
+    if virsh list --name --state-running | grep -Fxq "$VM_NAME"; then
+        echo "VM already running: $VM_NAME"
+        exit 0
+    fi
     echo "Starting VM: $VM_NAME"
     virsh start "$VM_NAME"
 else
