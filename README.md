@@ -43,13 +43,15 @@ Check that the service is installed and running:
 sudo systemctl status virsh_wakeonlan.service
 ```
 
-Inspect service-level output with `journalctl`:
+The listener logs every packet it receives, valid or not, and the outcome of each
+VM start to the journal:
 
 ```bash
 sudo journalctl -u virsh_wakeonlan.service
 ```
 
-File logging is disabled by default. To enable append-only logging to `/var/log/virsh_wakeonlan.log`, add a `systemd` override:
+To also append the same messages to `/var/log/virsh_wakeonlan.log`, add a
+`systemd` override:
 
 ```ini
 [Service]
@@ -62,13 +64,24 @@ sudo systemctl daemon-reload
 sudo systemctl restart virsh_wakeonlan.service
 ```
 
-When enabled, `/var/log/virsh_wakeonlan.log` is written in append mode, so `tail -f /var/log/virsh_wakeonlan.log` is only relevant after enabling logging:
+Then send a Wake-on-LAN packet to the MAC address of a configured VM and confirm that the VM starts.
+
+## Troubleshooting
+
+**Nothing in the journal when a packet is sent from the host itself.** The packet
+never reached the listener. A packet addressed to the broadcast address of a
+libvirt network, such as `192.168.122.255`, is delivered locally only while the
+bridge of that network exists; otherwise it follows the default route and leaves
+the host. Check with:
 
 ```bash
-sudo tail -f /var/log/virsh_wakeonlan.log
+ip route get 192.168.122.255   # expected: "broadcast ... dev virbr0", not "via <gateway>"
+virsh net-list --all
 ```
 
-Then send a Wake-on-LAN packet to the MAC address of a configured VM and confirm that the VM starts.
+The unit pulls in `virtnetworkd.service` so that networks set to autostart are
+up at boot. A network without autostart has to be started by hand
+(`virsh net-start <name>`) or set to autostart (`virsh net-autostart <name>`).
 
 ## Uninstall
 

@@ -5,7 +5,8 @@ import select
 import socket
 import subprocess
 
-# Logging configuration
+# Logging configuration: always to stderr, which systemd sends to the journal,
+# and to LOG_FILE as well when VIRSH_WAKEONLAN_LOG_ENABLED is set.
 LOG_FILE = "/var/log/virsh_wakeonlan.log"
 LOG_ENABLED_VALUES = {"1", "true", "yes", "on"}
 log_enabled = (
@@ -13,15 +14,15 @@ log_enabled = (
     in LOG_ENABLED_VALUES
 )
 
+log_handlers = [logging.StreamHandler()]
 if log_enabled:
-    logging.basicConfig(
-        filename=LOG_FILE,
-        filemode="a",
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s",
-    )
-else:
-    logging.getLogger().addHandler(logging.NullHandler())
+    log_handlers.append(logging.FileHandler(LOG_FILE, mode="a"))
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=log_handlers,
+)
 
 # Standard Wake-on-LAN ports
 PORTS = [9, 7, 40000]
